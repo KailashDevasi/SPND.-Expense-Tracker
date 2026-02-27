@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>spnd.</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="spnd.">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: #e4e2da;
+    --amber: #4f46e5;
+    --amber-dim: #818cf8;
+    --text: #1a1a18;
+    --muted: #8a8880;
+    --muted2: #c8c6be;
+    --red: #dc2626;
+    --green: #16a34a;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --pink: #db2777;
+    --teal: #0d9488;
+    --orange: #ea580c;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--amber);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { font-style: italic; }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .nav-tab {
+    padding: 6px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    background: none;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .nav-tab.active {
+    background: var(--amber);
+    color: var(--bg);
+  }
+
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* ADD VIEW */
+  #add-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 48px;
+  }
+
+  .amount-block {
+    text-align: center;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .amount-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .amount-input-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .currency-sym {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    color: var(--amber-dim);
+    line-height: 1;
+    padding-bottom: 4px;
+  }
+
+  #amount-input {
+    font-family: 'DM Serif Display', serif;
+    font-size: 80px;
+    font-weight: 400;
+    color: var(--text);
+    background: none;
+    border: none;
+    outline: none;
+    width: 300px;
+    text-align: center;
+    caret-color: var(--amber);
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  #amount-input::placeholder { color: var(--muted2); }
+
+  .amount-underline {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .amount-underline::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: var(--amber);
+    transition: width 0.3s, left 0.3s;
+    border-radius: 2px;
+  }
+
+  #amount-input:focus ~ .amount-underline::after,
+  .amount-underline.active::after {
+    width: 100%;
+    left: 0;
+  }
+
+  /* NOTE INPUT */
+  .note-wrap {
+    width: 100%;
+    max-width: 480px;
+    margin-top: -28px;
+  }
+
+  #note-input {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    outline: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 8px 2px;
+    caret-color: var(--amber);
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  #note-input::placeholder { color: var(--muted2); }
+  #note-input:focus { color: var(--text); border-color: var(--amber-dim); }
+
+  /* CATEGORIES */
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 520px;
+  }
+
+  .cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .cat-btn .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .cat-btn:hover { color: var(--text); border-color: var(--muted); }
+
+  .cat-btn.selected {
+    color: var(--bg) !important;
+    border-color: transparent !important;
+  }
+
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px;
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,70,229,0.25); }
+  .submit-btn:active { transform: translateY(0); }
+
+  .submit-btn.success {
+    background: var(--green) !important;
+  }
+
+  /* STATS VIEW */
+  #stats-view {
+    flex: 1;
+    padding: 32px 28px;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .stats-header {
+    margin-bottom: 40px;
+  }
+
+  .total-amount {
+    font-family: 'DM Serif Display', serif;
+    font-size: 56px;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .total-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    width: fit-content;
+  }
+
+  .period-tab {
+    padding: 5px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    background: none;
+    border: none;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .period-tab.active { background: var(--amber); color: var(--bg); }
+  .period-tab:hover:not(.active) { color: var(--text); }
+
+  /* COMPARISON */
+  .comparison-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .comp-col { flex: 1; }
+  .comp-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .comp-amount { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -1px; }
+  .comp-amount.current { color: var(--amber); }
+  .comp-amount.past { color: var(--muted); }
+
+  .comp-divider { width: 1px; height: 50px; background: var(--border); flex-shrink: 0; }
+
+  .comp-delta {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .comp-delta.up { background: rgba(224,82,82,0.15); color: var(--red); }
+  .comp-delta.down { background: rgba(82,168,130,0.15); color: var(--green); }
+  .comp-delta.same { background: var(--muted2); color: var(--muted); }
+
+  /* CATEGORIES BREAKDOWN */
+  .breakdown-title {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .cat-row {
+    margin-bottom: 18px;
+  }
+
+  .cat-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+
+  .cat-row-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .cat-row-amount {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+  }
+
+  .cat-row-pct {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--muted2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  /* RECENT */
+  .recent-section { margin-top: 36px; }
+  .recent-title { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+  .txn-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .txn-left { display: flex; align-items: center; gap: 12px; }
+  .txn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .txn-note { font-size: 13px; color: var(--text); }
+  .txn-cat { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .txn-right { text-align: right; }
+  .txn-amount { font-family: 'DM Serif Display', serif; font-size: 18px; letter-spacing: -0.5px; }
+  .txn-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .empty-state .big { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--muted2); margin-bottom: 8px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    border: 1px solid var(--border);
+    color: var(--bg);
+    padding: 12px 22px;
+    border-radius: 40px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hidden { display: none !important; }
+
+  @keyframes pop {
+    0% { transform: scale(0.95); }
+    60% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+
+  .pop { animation: pop 0.25s ease; }
+
+  /* INFO BUTTON */
+  .info-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .info-btn:hover { color: var(--amber); border-color: var(--amber); }
+
+  /* SPLASH */
+  #splash {
+    position: fixed;
+    inset: 0;
+    background: #f7f6f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s;
+  }
+
+  #splash.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .splash-inner { text-align: center; }
+
+  .splash-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 64px;
+    color: var(--amber);
+    letter-spacing: -2px;
+    animation: splashPop 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+
+  .splash-logo span { font-style: italic; }
+
+  .splash-by {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-top: 8px;
+    text-transform: uppercase;
+    animation: splashFade 0.6s 0.2s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes splashPop {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes splashFade {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ABOUT MODAL */
+  #about-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,24,0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .about-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.12);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .about-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 40px;
+    color: var(--amber);
+    letter-spacing: -1px;
+  }
+  .about-logo span { font-style: italic; }
+
+  .about-tagline {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-top: 10px;
+  }
+
+  .about-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  .about-made {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .about-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .about-version {
+    font-size: 11px;
+    color: var(--muted2);
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  .about-close {
+    margin-top: 28px;
+    width: 100%;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .about-close:hover { color: var(--text); border-color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="app">
+  <nav>
+    <div class="logo">spnd<span>.</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="info-btn" onclick="showAbout()" title="About">ℹ</button>
+      <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showView('add')">+ Add</button>
+      <button class="nav-tab" onclick="showView('stats')">Stats</button>
+    </div>
+    </div>
+  </nav>
+
+  <!-- ADD VIEW -->
+  <div id="add-view">
+    <div class="amount-block">
+      <div class="amount-label">How much did you spend?</div>
+      <div class="amount-input-wrap">
+        <div class="currency-sym">₹</div>
+        <input type="number" id="amount-input" placeholder="0" min="0" autofocus>
+      </div>
+      <div class="amount-underline" id="amount-underline"></div>
+    </div>
+
+    <div class="note-wrap">
+      <input type="text" id="note-input" placeholder="note (optional)">
+    </div>
+
+    <div class="categories" id="categories"></div>
+
+    <button class="submit-btn" onclick="addExpense()" id="submit-btn">Record Expense</button>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div id="stats-view" class="hidden">
+    <div class="stats-header">
+      <div class="total-label">Total Spent</div>
+      <div class="total-amount" id="total-amount">₹0</div>
+      <div class="period-tabs">
+        <button class="period-tab active" onclick="setPeriod('week')">This Week</button>
+        <button class="period-tab" onclick="setPeriod('month')">This Month</button>
+        <button class="period-tab" onclick="setPeriod('all')">All Time</button>
+      </div>
+    </div>
+
+    <div class="comparison-bar" id="comparison-bar"></div>
+
+    <div class="breakdown-title">By Category</div>
+    <div id="cat-breakdown"></div>
+
+    <div class="recent-section">
+      <div class="recent-title">Recent Transactions</div>
+      <div id="recent-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- SPLASH SCREEN -->
+<div id="splash">
+  <div class="splash-inner">
+    <div class="splash-logo">spnd<span>.</span></div>
+    <div class="splash-by">built by Kailash</div>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div id="about-overlay" class="hidden" onclick="hideAbout()">
+  <div class="about-card" onclick="event.stopPropagation()">
+    <div class="about-logo">spnd<span>.</span></div>
+    <div class="about-tagline">Minimal expense tracker.<br>Open, type, done.</div>
+    <div class="about-divider"></div>
+    <div class="about-made">Designed & built by</div>
+    <div class="about-name">Kailash</div>
+    <div class="about-version">v1.0</div>
+    <button class="about-close" onclick="hideAbout()">Close</button>
+  </div>
+</div>
+
+<script>
+const CATS = [
+  { id: 'food',      label: 'Food',       color: '#ea580c', emoji: '🍜' },
+  { id: 'transport', label: 'Transport',  color: '#2563eb', emoji: '🚌' },
+  { id: 'shopping',  label: 'Shopping',   color: '#db2777', emoji: '🛍' },
+  { id: 'bills',     label: 'Bills',      color: '#0d9488', emoji: '💡' },
+  { id: 'health',    label: 'Health',     color: '#16a34a', emoji: '💊' },
+  { id: 'fun',       label: 'Fun',        color: '#7c3aed', emoji: '🎮' },
+  { id: 'other',     label: 'Other',      color: '#64748b', emoji: '📦' },
+];
+
+let selectedCat = null;
+let currentPeriod = 'week';
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem('spnd_data') || '[]'); } catch { return []; }
+}
+
+function saveData(data) {
+  localStorage.setItem('spnd_data', JSON.stringify(data));
+}
+
+function fmt(n) {
+  return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+function timeLabel(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function getRange(period, offset = 0) {
+  const now = new Date();
+  if (period === 'week') {
+    const day = now.getDay();
+    const start = new Date(now); start.setDate(now.getDate() - day - (offset * 7)); start.setHours(0,0,0,0);
+    const end = new Date(start); end.setDate(start.getDate() + 7);
+    return [start, end];
+  } else if (period === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 0, 23, 59, 59);
+    return [start, end];
+  } else {
+    return [new Date(0), new Date(now.getTime() + 1000)];
+  }
+}
+
+function filterByRange(data, period, offset = 0) {
+  if (period === 'all') return data;
+  const [start, end] = getRange(period, offset);
+  return data.filter(e => e.ts >= start.getTime() && e.ts < end.getTime());
+}
+
+function sumData(data) {
+  return data.reduce((s, e) => s + e.amount, 0);
+}
+
+// Render categories
+function renderCats() {
+  const wrap = document.getElementById('categories');
+  wrap.innerHTML = CATS.map(c => `
+    <button class="cat-btn${selectedCat === c.id ? ' selected' : ''}" 
+      id="cat-${c.id}"
+      style="${selectedCat === c.id ? `background:${c.color};` : ''}"
+      onclick="selectCat('${c.id}')">
+      <span class="dot" style="background:${c.color}"></span>
+      ${c.emoji} ${c.label}
+    </button>
+  `).join('');
+}
+
+function selectCat(id) {
+  selectedCat = id;
+  renderCats();
+}
+
+function addExpense() {
+  const amount = parseFloat(document.getElementById('amount-input').value);
+  const note = document.getElementById('note-input').value.trim();
+
+  if (!amount || amount <= 0) { showToast('Enter an amount first'); return; }
+  if (!selectedCat) { showToast('Pick a category'); return; }
+
+  const data = getData();
+  data.push({ id: Date.now(), amount, note: note || null, cat: selectedCat, ts: Date.now() });
+  saveData(data);
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = '✓ Saved!';
+  btn.classList.add('success');
+  setTimeout(() => { btn.textContent = 'Record Expense'; btn.classList.remove('success'); }, 1500);
+
+  document.getElementById('amount-input').value = '';
+  document.getElementById('note-input').value = '';
+  selectedCat = null;
+  renderCats();
+  document.getElementById('amount-input').focus();
+  showToast('Expense recorded');
+}
+
+function setPeriod(p) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderStats();
+}
+
+function renderStats() {
+  const data = getData();
+  const curr = filterByRange(data, currentPeriod, 0);
+  const past = currentPeriod !== 'all' ? filterByRange(data, currentPeriod, 1) : [];
+
+  const totalCurr = sumData(curr);
+  const totalPast = sumData(past);
+
+  document.getElementById('total-amount').textContent = fmt(totalCurr);
+
+  // Comparison
+  const compBar = document.getElementById('comparison-bar');
+  if (currentPeriod === 'all') {
+    compBar.style.display = 'none';
+  } else {
+    compBar.style.display = 'flex';
+    const delta = totalCurr - totalPast;
+    const pct = totalPast > 0 ? Math.round(Math.abs(delta) / totalPast * 100) : 0;
+    const label = currentPeriod === 'week' ? ['This Week', 'Last Week'] : ['This Month', 'Last Month'];
+    const deltaClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+    const deltaLabel = delta > 0 ? `+${pct}%` : delta < 0 ? `-${pct}%` : '—';
+
+    compBar.innerHTML = `
+      <div class="comp-col">
+        <div class="comp-label">${label[0]}</div>
+        <div class="comp-amount current">${fmt(totalCurr)}</div>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-col">
+        <div class="comp-label">${label[1]}</div>
+        <div class="comp-amount past">${fmt(totalPast)}</div>
+      </div>
+      <div class="comp-delta ${deltaClass}">${deltaLabel}</div>
+    `;
+  }
+
+  // Breakdown
+  const breakdown = document.getElementById('cat-breakdown');
+  if (curr.length === 0) {
+    breakdown.innerHTML = `<div class="empty-state"><div class="big">₹0</div>No expenses yet in this period.</div>`;
+  } else {
+    const bycat = {};
+    curr.forEach(e => { bycat[e.cat] = (bycat[e.cat] || 0) + e.amount; });
+    const sorted = CATS.filter(c => bycat[c.id]).sort((a,b) => bycat[b.id]-bycat[a.id]);
+    const max = Math.max(...sorted.map(c => bycat[c.id]));
+
+    breakdown.innerHTML = sorted.map(c => {
+      const amt = bycat[c.id];
+      const pct = totalCurr > 0 ? Math.round(amt/totalCurr*100) : 0;
+      const barW = max > 0 ? Math.round(amt/max*100) : 0;
+      return `
+        <div class="cat-row">
+          <div class="cat-row-header">
+            <div class="cat-row-name">
+              <span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span>
+              ${c.emoji} ${c.label}
+            </div>
+            <div>
+              <span class="cat-row-amount">${fmt(amt)}</span>
+              <span class="cat-row-pct">${pct}%</span>
+            </div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${barW}%;background:${c.color}"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Recent
+  const recent = [...data].sort((a,b) => b.ts - a.ts).slice(0, 10);
+  const recentEl = document.getElementById('recent-list');
+  if (recent.length === 0) {
+    recentEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:20px 0">No transactions yet.</div>`;
+  } else {
+    recentEl.innerHTML = recent.map(e => {
+      const c = CATS.find(x => x.id === e.cat) || CATS[6];
+      return `
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-dot" style="background:${c.color}"></div>
+            <div>
+              <div class="txn-note">${e.note || c.label}</div>
+              <div class="txn-cat">${c.emoji} ${c.label}</div>
+            </div>
+          </div>
+          <div class="txn-right">
+            <div class="txn-amount">${fmt(e.amount)}</div>
+            <div class="txn-date">${timeLabel(e.ts)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function showView(v) {
+  document.getElementById('add-view').classList.toggle('hidden', v !== 'add');
+  document.getElementById('stats-view').classList.toggle('hidden', v !== 'stats');
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&v==='add')||(i===1&&v==='stats')));
+  if (v === 'stats') renderStats();
+  if (v === 'add') setTimeout(() => document.getElementById('amount-input').focus(), 50);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Amount input focus effect
+document.getElementById('amount-input').addEventListener('input', () => {
+  document.getElementById('amount-underline').classList.add('active');
+});
+
+document.getElementById('amount-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addExpense();
+});
+
+// Init
+renderCats();
+
+// Splash screen — hide after 1.8s
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+  }, 1800);
+});
+
+// About modal
+function showAbout() {
+  document.getElementById('about-overlay').classList.remove('hidden');
+}
+function hideAbout() {
+  document.getElementById('about-overlay').classList.add('hidden');
+}
+
+// Register Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+</script>
+</body>
+</html>
