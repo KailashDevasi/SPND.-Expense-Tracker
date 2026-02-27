@@ -636,6 +636,116 @@
   }
 
   .about-close:hover { color: var(--text); border-color: var(--muted); }
+
+  .reset-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 1px solid rgba(220,38,38,0.3);
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { background: rgba(220,38,38,0.06); border-color: var(--red); }
+
+  /* DELETE TXN */
+  .txn-item { position: relative; }
+
+  .txn-delete {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--muted2);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .txn-item:hover .txn-delete { opacity: 1; }
+  .txn-delete:hover { color: var(--red); background: rgba(220,38,38,0.08); }
+
+  /* CONFIRM MODAL */
+  #confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,24,0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .confirm-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+    animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.12);
+  }
+
+  .confirm-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .confirm-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .confirm-btns { display: flex; gap: 8px; }
+
+  .confirm-cancel {
+    flex: 1;
+    padding: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .confirm-cancel:hover { color: var(--text); }
+
+  .confirm-delete {
+    flex: 1;
+    padding: 11px;
+    background: var(--red);
+    border: none;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .confirm-delete:hover { background: #b91c1c; }
 </style>
 </head>
 <body>
@@ -715,6 +825,19 @@
     <div class="about-name">Kailash</div>
     <div class="about-version">v1.0</div>
     <button class="about-close" onclick="hideAbout()">Close</button>
+    <button class="reset-btn" onclick="confirmReset()">Reset All Data</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-overlay" class="hidden">
+  <div class="confirm-card">
+    <div class="confirm-title">Reset everything?</div>
+    <div class="confirm-desc">This will permanently delete all your expense records. This cannot be undone.</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="hideConfirm()">Cancel</button>
+      <button class="confirm-delete" onclick="resetAll()">Delete All</button>
+    </div>
   </div>
 </div>
 
@@ -909,7 +1032,7 @@ function renderStats() {
     recentEl.innerHTML = recent.map(e => {
       const c = CATS.find(x => x.id === e.cat) || CATS[6];
       return `
-        <div class="txn-item">
+        <div class="txn-item" id="txn-${e.id}">
           <div class="txn-left">
             <div class="txn-dot" style="background:${c.color}"></div>
             <div>
@@ -917,9 +1040,12 @@ function renderStats() {
               <div class="txn-cat">${c.emoji} ${c.label}</div>
             </div>
           </div>
-          <div class="txn-right">
-            <div class="txn-amount">${fmt(e.amount)}</div>
-            <div class="txn-date">${timeLabel(e.ts)}</div>
+          <div class="txn-right" style="display:flex;align-items:center;gap:4px;">
+            <div>
+              <div class="txn-amount">${fmt(e.amount)}</div>
+              <div class="txn-date">${timeLabel(e.ts)}</div>
+            </div>
+            <button class="txn-delete" onclick="deleteTxn(${e.id})" title="Delete">✕</button>
           </div>
         </div>
       `;
@@ -967,6 +1093,34 @@ function showAbout() {
 }
 function hideAbout() {
   document.getElementById('about-overlay').classList.add('hidden');
+}
+
+// Delete single transaction
+function deleteTxn(id) {
+  const data = getData().filter(e => e.id !== id);
+  saveData(data);
+  const el = document.getElementById(`txn-${id}`);
+  if (el) {
+    el.style.transition = 'opacity 0.2s, transform 0.2s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(10px)';
+    setTimeout(() => renderStats(), 220);
+  }
+}
+
+// Reset all
+function confirmReset() {
+  hideAbout();
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+}
+function hideConfirm() {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+}
+function resetAll() {
+  localStorage.removeItem('spnd_data');
+  hideConfirm();
+  renderStats();
+  showToast('All data cleared');
 }
 
 // Register Service Worker (PWA)
